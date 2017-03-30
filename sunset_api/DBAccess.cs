@@ -9,7 +9,7 @@ namespace sunset_api
 {    
     public class DBAccess
     {        
-        public SqlConnection conn = new SqlConnection(@"Data Source=.\WSSERVER_2014;Initial Catalog=WeighingSystem;User id=sa;Password=Scaleit4625;");
+        public SqlConnection conn = new SqlConnection(@"Data Source=.\WSSERVER;Initial Catalog=WeighingSystem;User id=sa;Password=rs232cv;");
 
         private System.Xml.XmlReader xmlData;
 
