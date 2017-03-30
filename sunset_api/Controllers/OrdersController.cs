@@ -8,7 +8,7 @@ namespace sunset_api.Controllers
 {
     [Route("api/[controller]")]
     public class OrdersController : Controller
-    {
+    {        
         // GET api/orders
         [HttpGet]
         public IEnumerable<string> Get()
@@ -24,7 +24,11 @@ namespace sunset_api.Controllers
             //Writes a single column on a table.  Write 'STD' to the orderheader.ord_status column   where the orderheader.ord_number == the id in the GET url
             //Returns nothing, 200 OK
 
-            return "Started Order: " + id;
+            DBAccess db = new DBAccess();
+            string results = db.Querry("SELECT * FROM Orders WHERE id = " + id);
+            
+            
+            return "Started Order: " + results;
         }
 
         //// GET api/orders/byStatus?status="PLN"&start=2017-03-06T19:07:46Z&end=2017-03-07T23:07:46Z
