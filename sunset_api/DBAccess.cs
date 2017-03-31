@@ -9,7 +9,7 @@ namespace sunset_api
 {    
     public class DBAccess
     {        
-        public SqlConnection conn = new SqlConnection(@"Data Source=.\WSSERVER;Initial Catalog=WeighingSystem;User id=sa;Password=rs232cv;");
+        public SqlConnection conn = new SqlConnection(@"Data Source=sunset.c8cr1ng5leql.us-east-1.rds.amazonaws.com,1433;Initial Catalog=TMWSunset_Live;User id=sunset;Password=sunsetruckit;");
 
         public string QuerryJSON(string querry)
         {
@@ -36,7 +36,9 @@ namespace sunset_api
             SqlCommand command = new SqlCommand();
             command.Connection = conn;
             command.CommandText = querry;
-            command.ExecuteNonQuery();            
+            command.ExecuteNonQuery();
+
+            conn.Close();
         }
 
         private IEnumerable<Dictionary<string, object>> Serialize(SqlDataReader reader)

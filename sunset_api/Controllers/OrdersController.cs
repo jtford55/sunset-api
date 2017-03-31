@@ -29,7 +29,7 @@ namespace sunset_api.Controllers
             //Returns nothing, 200 OK
 
             DBAccess db = new DBAccess();
-            db.Update("UDPATE orderheader SET ord_status = 'STD' WHERE orderheader.ord_number = " + id.ToString());           
+            db.Update("UPDATE orderheader SET ord_status = 'STD' WHERE orderheader.ord_number = '" + id.ToString() + "'");           
         }
 
         //// GET api/orders/byStatus?status="PLN"&start=2017-03-06T19:07:46Z&end=2017-03-07T23:07:46Z
@@ -44,9 +44,14 @@ namespace sunset_api.Controllers
             */
             DBAccess db = new DBAccess();
 
+            if (status.Contains("\""))
+            {
+                status = status.Replace("\"", "");
+            }
+
             string query = "SELECT orderheader.ord_number AS orderheader_ord_number, orderheader.ord_status AS orderheader_ord_status, orderheader.ord_totalweight AS orderheader_ord_totalweight," +
                            "orderheader.ord_refnum AS orderheader_ord_refnum, orderheader.ord_description AS orderheader_ord_description, orderheader.ord_driver1 AS orderheader_ord_driver1," +
-                           "orderheader.ord_tractor AS orderheader_ord_tractor FROM orderheader JOIN stops ON orderheader.ord_number = stops.ord_hdrnumber AND stops.stp_type = %(stp_type_1)s " +
+                           "orderheader.ord_tractor AS orderheader_ord_tractor FROM orderheader JOIN stops ON orderheader.ord_number = stops.ord_hdrnumber " +
                            "WHERE orderheader.ord_status = '" + status + "' AND stops.stp_schdtearliest > '" + start.ToString() + "' AND stops.stp_schdtearliest < '" + end.ToString() + "'";
 
             result = db.QuerryJSON(query);
@@ -63,9 +68,19 @@ namespace sunset_api.Controllers
             //And also writes the weight to the stops.stp_weight where the stops.ord_hdrnumber is the order - id and the stops.stp_type = DRP
             //Returns nothing, 200 OK
 
+            if (weight.Contains("\""))
+            {
+                weight = weight.Replace("\"", "");
+            }
+
+            if (ticket_number.Contains("\""))
+            {
+                ticket_number = ticket_number.Replace("\"", "");
+            }
+
             DBAccess db = new DBAccess();
-            db.Update("UDPATE orderheader SET ord_status = 'CMP', ord_weight = '" + weight + "', ord_refnum = '" + ticket_number + "' WHERE orderheader.ord_number = " + id.ToString());
-            db.Update("UPDATE stops SET stp_weight = '" + weight + "' WHERE ord_hdrnumber = '" + id.ToString() + "' AND stp_type = 'DRP'");
+            db.Update("UPDATE orderheader SET ord_status = 'CMP', ord_totalweight = " + weight + ", ord_refnum = '" + ticket_number + "' WHERE orderheader.ord_number = '" + id.ToString() + "'");
+            db.Update("UPDATE stops SET stp_weight = " + weight + " WHERE ord_hdrnumber = '" + id.ToString() + "' AND stp_type = 'DRP'");
         }
     }
 }
