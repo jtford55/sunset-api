@@ -4,17 +4,33 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
 using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace sunset_api
 {    
     public class DBAccess
-    {        
-        public SqlConnection conn = new SqlConnection(@"Data Source=sunset.c8cr1ng5leql.us-east-1.rds.amazonaws.com,1433;Initial Catalog=TMWSunset_Live;User id=sunset;Password=sunsetruckit;");
+    {
+        public SqlConnection conn;
 
+        private int rowCount = 0;
+
+        public DBAccess()
+        {
+            //if (Debugger.IsAttached)
+                conn = new SqlConnection(@"Data Source=sunset.c8cr1ng5leql.us-east-1.rds.amazonaws.com,1433;Initial Catalog=TMWSunset_Live;User id=sunset;Password=sunsetruckit;");
+            //else
+            //    conn = new SqlConnection(@"Data Source=SET-SQL01;Initial Catalog=TMWSunset_Live;User id=Ruckitadmin;Password=Sunset2017#;");
+        }
         public string QuerryJSON(string querry)
         {
             string results = string.Empty;
-            conn.Open();
+
+            try
+            {
+                conn.Open();
+            }
+            catch(Exception ex)
+            { return ex.Message; }
 
             SqlCommand command = new SqlCommand();
             command.Connection = conn;
@@ -22,7 +38,18 @@ namespace sunset_api
             SqlDataReader reader = command.ExecuteReader();
 
             var r = Serialize(reader);
-            string json = JsonConvert.SerializeObject(r, Formatting.Indented);
+
+            var totalCount = rowCount;
+
+            var paginationHeader = new
+            {
+                count = totalCount,
+                results = r
+            };
+
+
+            string json = JsonConvert.SerializeObject(paginationHeader, Formatting.Indented);
+            //json += JsonConvert.SerializeObject(r, Formatting.Indented);
 
             conn.Close();
             return json;
@@ -58,6 +85,8 @@ namespace sunset_api
             var result = new Dictionary<string, object>();
             foreach (var col in cols)
                 result.Add(col, reader[col]);
+
+            rowCount++;
             return result;
         }
 

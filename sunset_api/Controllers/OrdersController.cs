@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-
+using System.Net;
 
 namespace sunset_api.Controllers
 {
@@ -21,18 +21,21 @@ namespace sunset_api.Controllers
 
         //// Get started order based on ID
         //// GET api/orders/<order-id>/started
+        //// GET api/orders/5922079/started
 
         [HttpGet("{id}/started")]
-        public void Get(int id)
+        public IActionResult Get(int id)
         {
             //Writes a single column on a table.  Write 'STD' to the orderheader.ord_status column   where the orderheader.ord_number == the id in the GET url
             //Returns nothing, 200 OK
 
             DBAccess db = new DBAccess();
-            db.Update("UPDATE orderheader SET ord_status = 'STD' WHERE orderheader.ord_number = '" + id.ToString() + "'");           
+            db.Update("UPDATE orderheader SET ord_status = 'STD' WHERE orderheader.ord_number = '" + id.ToString() + "'");
+
+            return Ok();
         }
 
-        //// GET api/orders/byStatus?status="PLN"&start=2017-03-06T19:07:46Z&end=2017-03-07T23:07:46Z
+        //// GET api/orders/byStatus?status="PLN"&start=2015-03-06T19:07:46Z&end=2017-03-07T23:07:46Z
         [HttpGet("byStatus")]
         public string Get(string status, DateTime start, DateTime end)
         {
@@ -60,9 +63,10 @@ namespace sunset_api.Controllers
         }
 
 
-        //// GET api/orders/<order-id>/complete/?weight="22.34"&ticket_number="1938429"
+        //// GET api/orders/5922079/complete/?weight=22.34&ticket_number=1938429
+        //// GET api/orders/<order-id>/complete/?weight=22.34&ticket_number=1938429
         [HttpGet("{id}/complete")]
-        public void Get(int id, string weight, string ticket_number)
+        public IActionResult Get(int id, string weight, string ticket_number)
         {
             //Writes 'CMP' to the orderheader.ord_status column, weight to orderheader.ord_weight, ticket number to orderheader.ord_refnum
             //And also writes the weight to the stops.stp_weight where the stops.ord_hdrnumber is the order - id and the stops.stp_type = DRP
@@ -81,6 +85,8 @@ namespace sunset_api.Controllers
             DBAccess db = new DBAccess();
             db.Update("UPDATE orderheader SET ord_status = 'CMP', ord_totalweight = " + weight + ", ord_refnum = '" + ticket_number + "' WHERE orderheader.ord_number = '" + id.ToString() + "'");
             db.Update("UPDATE stops SET stp_weight = " + weight + " WHERE ord_hdrnumber = '" + id.ToString() + "' AND stp_type = 'DRP'");
+
+            return Ok();
         }
     }
 }
