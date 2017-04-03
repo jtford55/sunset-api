@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Data.SqlClient;
 
 namespace sunset_api.Controllers
 {
@@ -30,7 +31,11 @@ namespace sunset_api.Controllers
             //Returns nothing, 200 OK
 
             DBAccess db = new DBAccess();
-            db.Update("UPDATE orderheader SET ord_status = 'STD' WHERE orderheader.ord_number = '" + id.ToString() + "'");
+            SqlCommand comm = new SqlCommand("UPDATE orderheader SET ord_status = 'STD' WHERE orderheader.ord_number = @orderid");
+            comm.Parameters.AddWithValue("orderid", Convert.ToString(id));
+            db.Update(comm);
+
+            //db.Update("UPDATE orderheader SET ord_status = 'STD' WHERE orderheader.ord_number = '" + id.ToString() + "'");
 
             return Ok();
         }
@@ -83,8 +88,20 @@ namespace sunset_api.Controllers
             }
 
             DBAccess db = new DBAccess();
-            db.Update("UPDATE orderheader SET ord_status = 'CMP', ord_totalweight = " + weight + ", ord_refnum = '" + ticket_number + "' WHERE orderheader.ord_number = '" + id.ToString() + "'");
-            db.Update("UPDATE stops SET stp_weight = " + weight + " WHERE ord_hdrnumber = '" + id.ToString() + "' AND stp_type = 'DRP'");
+
+            SqlCommand comm = new SqlCommand("UPDATE orderheader SET ord_status = 'CMP', ord_totalweight = @weight, ord_refnum = @ticket_number WHERE orderheader.ord_number = @orderid");
+            comm.Parameters.Add(new SqlParameter("weight", weight));
+            comm.Parameters.Add(new SqlParameter("ticket_number", Convert.ToString(ticket_number)));
+            comm.Parameters.Add(new SqlParameter("orderid", Convert.ToString(id)));
+            db.Update(comm);
+
+            comm = new SqlCommand("UPDATE stops SET stp_weight = @weight WHERE ord_hdrnumber = @orderid AND stp_type = 'DRP'");
+            comm.Parameters.Add(new SqlParameter("weight", weight));
+            comm.Parameters.Add(new SqlParameter("orderid", Convert.ToString(id)));
+            db.Update(comm);
+
+            //db.Update("UPDATE orderheader SET ord_status = 'CMP', ord_totalweight = " + weight + ", ord_refnum = '" + ticket_number + "' WHERE orderheader.ord_number = '" + id.ToString() + "'");
+            //db.Update("UPDATE stops SET stp_weight = " + weight + " WHERE ord_hdrnumber = '" + id.ToString() + "' AND stp_type = 'DRP'");
 
             return Ok();
         }

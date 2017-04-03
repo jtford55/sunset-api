@@ -16,10 +16,10 @@ namespace sunset_api
 
         public DBAccess()
         {
-            if (Debugger.IsAttached)
+            //if (Debugger.IsAttached)
                 conn = new SqlConnection(@"Data Source=sunset.c8cr1ng5leql.us-east-1.rds.amazonaws.com,1433;Initial Catalog=TMWSunset_Live;User id=sunset;Password=sunsetruckit;");
-            else
-                conn = new SqlConnection(@"Data Source=SET-SQL01;Initial Catalog=TMWSunset_Live;User id=Ruckitadmin;Password=Sunset2017#;");
+            //else
+            //    conn = new SqlConnection(@"Data Source=SET-SQL01;Initial Catalog=TMWSunset_Live;User id=Ruckitadmin;Password=Sunset2017#;");
         }
         public string QuerryJSON(string querry)
         {
@@ -57,14 +57,21 @@ namespace sunset_api
 
         public void Update(string querry)
         {
-            string results = string.Empty;
             conn.Open();
 
             SqlCommand command = new SqlCommand();
             command.Connection = conn;
-            command.CommandText = querry;
+            command.CommandText = querry;            
             command.ExecuteNonQuery();
 
+            conn.Close();
+        }
+
+        public void Update(SqlCommand command)
+        {
+            conn.Open();
+            command.Connection = conn;
+            int check = command.ExecuteNonQuery();
             conn.Close();
         }
 
