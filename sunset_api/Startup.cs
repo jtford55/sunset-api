@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace sunset_api
 {
@@ -36,6 +37,9 @@ namespace sunset_api
             
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+
+            if (Debugger.IsAttached == false)
+                app.UseMiddleware<AuthenticationMiddleware>();     
 
             app.UseMvc();
         }
