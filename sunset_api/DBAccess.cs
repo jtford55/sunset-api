@@ -18,9 +18,9 @@ namespace sunset_api
         public DBAccess()
         {
             //if (Debugger.IsAttached)
-                conn = new SqlConnection(@"Data Source=sunset.c8cr1ng5leql.us-east-1.rds.amazonaws.com,1433;Initial Catalog=TMWSunset_Live;User id=sunset;Password=sunsetruckit;");
+                conn = new SqlConnection(@"Data Source=sunset.c8cr1ng5leql.us-east-1.rds.amazonaws.com,1433;Initial Catalog=TMWSunset_Live;User id=sunset;Password=sunsetruckit;MultipleActiveResultSets=True");
             //else
-            //    conn = new SqlConnection(@"Data Source=SET-SQL01;Initial Catalog=TMWSunset_Live;User id=Ruckitadmin;Password=Sunset2017#;");
+            //    conn = new SqlConnection(@"Data Source=SET-SQL01;Initial Catalog=TMWSunset_Live;User id=Ruckitadmin;Password=Sunset2017#;MultipleActiveResultSets=True");
         }
         public string QuerryJSON(string querry)
         {
@@ -86,29 +86,24 @@ namespace sunset_api
                     }
 
                     //GET DRP Stop regardless of date just equal to DRP and ord_hdrnumber = ord_number
-                    using (SqlConnection drp_conn = new SqlConnection(@"Data Source=sunset.c8cr1ng5leql.us-east-1.rds.amazonaws.com,1433;Initial Catalog=TMWSunset_Live;User id=sunset;Password=sunsetruckit;"))
+                    SqlCommand drp_command = new SqlCommand();
+                    drp_command.Connection = conn;
+                    drp_command.CommandText = "SELECT stops.stp_type as type, stops.stp_address as stop_address, stops.stp_zipcode as stop_zipcode,stops.ord_hdrnumber as hdrnumber, " +
+                                          "stops.stp_schdtearliest as time, stops.stp_number as stop_id, stops.stp_weight as stop_weight FROm stops " +
+                                          "WHERE stops.stp_type = 'DRP' AND stops.ord_hdrnumber = '" + reader["number"].ToString().Trim() + "'";
+
+                    SqlDataReader drp_reader = drp_command.ExecuteReader();
+                    drp_reader.Read();
+
+                    if (drp_reader.HasRows)
                     {
-                        drp_conn.Open();
-                        SqlCommand drp_command = new SqlCommand();
-                        drp_command.Connection = drp_conn;
-                        drp_command.CommandText = "SELECT stops.stp_type as type, stops.stp_address as stop_address, stops.stp_zipcode as stop_zipcode,stops.ord_hdrnumber as hdrnumber, " +
-                                              "stops.stp_schdtearliest as time, stops.stp_number as stop_id, stops.stp_weight as stop_weight FROm stops " +
-                                              "WHERE stops.stp_type = 'DRP' AND stops.ord_hdrnumber = '" + reader["number"].ToString().Trim() + "'";
-
-                        SqlDataReader drp_reader = drp_command.ExecuteReader();
-                        drp_reader.Read();
-
-                        if (drp_reader.HasRows)
-                        {
-                            end.weight = drp_reader["stop_weight"];
-                            end.type = drp_reader["type"].ToString();
-                            end.time = Convert.ToDateTime(drp_reader["time"]);
-                            end.zipcode = drp_reader["stop_zipcode"].ToString().Trim();
-                            end.address = drp_reader["stop_address"].ToString().Trim();
-                            end.order_number = drp_reader["hdrnumber"].ToString().Trim();
-                            end.id = drp_reader["stop_id"].ToString().Trim();
-                        }
-                        drp_conn.Close();
+                        end.weight = drp_reader["stop_weight"];
+                        end.type = drp_reader["type"].ToString();
+                        end.time = Convert.ToDateTime(drp_reader["time"]);
+                        end.zipcode = drp_reader["stop_zipcode"].ToString().Trim();
+                        end.address = drp_reader["stop_address"].ToString().Trim();
+                        end.order_number = drp_reader["hdrnumber"].ToString().Trim();
+                        end.id = drp_reader["stop_id"].ToString().Trim();
                     }
 
                     endReader = reader.Read();
@@ -146,7 +141,6 @@ namespace sunset_api
 
             string json = JsonConvert.SerializeObject(paginationHeader, Formatting.Indented);
 
-            
             conn.Close();
             return json;
         }
