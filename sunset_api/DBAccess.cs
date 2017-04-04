@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Data.SqlClient;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Collections;
 
 namespace sunset_api
 {    
@@ -24,6 +25,8 @@ namespace sunset_api
         public string QuerryJSON(string querry)
         {
             string results = string.Empty;
+            bool keepGoing = true;
+            bool endReader = true;
 
             try
             {
@@ -37,19 +40,94 @@ namespace sunset_api
             command.CommandText = querry;
             SqlDataReader reader = command.ExecuteReader();
 
-            var r = Serialize(reader);
+            ArrayList objs = new ArrayList();
+
+            reader.Read();
+
+            while (keepGoing)
+            {
+                string ord_number = reader["number"].ToString().Trim();
+
+                Order ord = new Order();
+                Driver dri = new Driver();
+                Truck tru = new Truck();
+                Start str = new Start();
+                End end = new End();
+
+                ord.number = reader["number"].ToString().Trim();
+                ord.status = reader["status"].ToString().Trim();
+                ord.description = reader["description"];
+                ord.weight = reader["weight"];
+                ord.ticket_number = reader["ticket_number"].ToString().Trim();
+
+                dri.phone_number = reader["phone_number"].ToString().Trim();
+                dri.first_name = reader["first_name"].ToString().Trim();
+                dri.last_name = reader["last_name"].ToString().Trim();
+                dri.license_number = reader["license_number"].ToString().Trim();
+                dri.zipcode = reader["zipcode"].ToString().Trim();
+                dri.state = reader["state"].ToString().Trim();
+                dri.id = reader["driver_id"].ToString().Trim();
+                dri.street_address = reader["street_address"].ToString().Trim();
+
+                tru.number = reader["number"].ToString().Trim();
+                tru.license_plate = reader["license_plate"].ToString().Trim();
+
+                while (endReader && ord_number == reader["number"].ToString().Trim())
+                {
+                    if (reader["type"].ToString().Trim() == "PUP")
+                    {
+                        str.weight = reader["stop_weight"];
+                        str.type = reader["type"].ToString();
+                        str.time = Convert.ToDateTime(reader["time"]);
+                        str.zipcode = reader["stop_zipcode"].ToString().Trim();
+                        str.address = reader["stop_address"].ToString().Trim();
+                        str.order_number = reader["number"].ToString().Trim();
+                        str.id = reader["stop_id"].ToString().Trim();
+                    }
+                    else
+                    {
+                        end.weight = reader["stop_weight"];
+                        end.type = reader["type"].ToString();
+                        end.time = Convert.ToDateTime(reader["time"]);
+                        end.zipcode = reader["stop_zipcode"].ToString().Trim();
+                        end.address = reader["stop_address"].ToString().Trim();
+                        end.order_number = reader["number"].ToString().Trim();
+                        end.id = reader["stop_id"].ToString().Trim();
+                    }
+
+                    endReader = reader.Read();
+                }
+
+                if (endReader == false)
+                    keepGoing = false;
+
+                objs.Add(new Order{
+                    status = ord.status,
+                    end = end,
+                    description =  ord.description,
+                    weight = ord.weight,
+                    driver = dri,
+                    number = ord.number,
+                    start = str,
+                    truck = tru,
+                    ticket_number = ord.ticket_number }
+                    );
+
+                rowCount++;
+            }
 
             var totalCount = rowCount;
 
             var paginationHeader = new
             {
                 count = totalCount,
-                results = r
+                next = "",
+                results = objs,
+                previous = ""
             };
 
 
             string json = JsonConvert.SerializeObject(paginationHeader, Formatting.Indented);
-            //json += JsonConvert.SerializeObject(r, Formatting.Indented);
 
             conn.Close();
             return json;
@@ -98,4 +176,107 @@ namespace sunset_api
         }
 
     }
+
+    public class End
+    {
+        public object weight { get; set; }
+        public string type { get; set; }
+        public DateTime time { get; set; }
+        public string zipcode { get; set; }
+        public string address { get; set; }
+        public string order_number { get; set; }
+        public string id { get; set; }
+    }
+
+    public class Start
+    {
+        public object weight { get; set; }
+        public string type { get; set; }
+        public DateTime time { get; set; }
+        public string zipcode { get; set; }
+        public string address { get; set; }
+        public string order_number { get; set; }
+        public string id { get; set; }
+    }
+
+    public class Driver
+    {
+        public string phone_number { get; set; }
+        public string first_name { get; set; }
+        public string last_name { get; set; }
+        public object license_number { get; set; }
+        public object zipcode { get; set; }
+        public object state { get; set; }
+        public string id { get; set; }
+        public object street_address { get; set; }
+    }
+
+    public class Truck
+    {
+        public string number { get; set; }
+        public object license_plate { get; set; }
+    }
+
+    public class Order
+    {
+        public string status { get; set; }
+        public End end { get; set; }
+        public Start start { get; set; }
+        public object description { get; set; }
+        public object weight { get; set; }
+        public Driver driver { get; set; }
+        public string number { get; set; }
+        public Truck truck { get; set; }
+        public object ticket_number { get; set; }
+    }
 }
+
+
+/*while (reader.Read())
+{
+    objs.Add(new Order {
+        status = reader["status"].ToString().Trim(),
+        end = new End
+        {
+            weight = reader["stop_weight"],
+            type = reader["type"].ToString(),
+            time = Convert.ToDateTime(reader["time"]),
+            zipcode = reader["stop_zipcode"].ToString().Trim(),
+            address = reader["stop_address"].ToString().Trim(),
+            order_number = reader["number"].ToString().Trim(),
+            id = reader["stop_id"].ToString().Trim()
+        },
+        description = reader["description"],
+        weight = reader["weight"],
+        driver = new Driver
+        {
+            phone_number = reader["phone_number"].ToString().Trim(),
+            first_name = reader["first_name"].ToString().Trim(),
+            last_name = reader["last_name"].ToString().Trim(),
+            license_number = reader["license_number"].ToString().Trim(),
+            zipcode = reader["zipcode"].ToString().Trim(),
+            state = reader["state"].ToString().Trim(),
+            id = reader["driver_id"].ToString().Trim(),
+            street_address = reader["street_address"].ToString().Trim()
+        },
+        number = reader["number"].ToString().Trim(),
+        start = new Start
+        {
+            weight = reader["stop_weight"],
+            type = reader["type"].ToString(),
+            time = Convert.ToDateTime(reader["time"]),
+            zipcode = reader["stop_zipcode"].ToString().Trim(),
+            address = reader["stop_address"].ToString().Trim(),
+            order_number = reader["number"].ToString().Trim(),
+            id = reader["stop_id"].ToString().Trim()
+        },
+        truck = new Truck
+        {
+            number = reader["number"].ToString().Trim(),
+            license_plate = reader["license_plate"].ToString().Trim()
+        },
+        ticket_number = reader["ticket_number"].ToString().Trim()
+    });
+
+    rowCount++;
+}*/
