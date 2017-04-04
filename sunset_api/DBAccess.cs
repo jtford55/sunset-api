@@ -44,76 +44,81 @@ namespace sunset_api
 
             reader.Read();
 
-            while (keepGoing)
+            if (reader.HasRows)
             {
-                string ord_number = reader["number"].ToString().Trim();
-
-                Order ord = new Order();
-                Driver dri = new Driver();
-                Truck tru = new Truck();
-                Start str = new Start();
-                End end = new End();
-
-                ord.number = reader["number"].ToString().Trim();
-                ord.status = reader["status"].ToString().Trim();
-                ord.description = reader["description"];
-                ord.weight = reader["weight"];
-                ord.ticket_number = reader["ticket_number"].ToString().Trim();
-
-                dri.phone_number = reader["phone_number"].ToString().Trim();
-                dri.first_name = reader["first_name"].ToString().Trim();
-                dri.last_name = reader["last_name"].ToString().Trim();
-                dri.license_number = reader["license_number"].ToString().Trim();
-                dri.zipcode = reader["zipcode"].ToString().Trim();
-                dri.state = reader["state"].ToString().Trim();
-                dri.id = reader["driver_id"].ToString().Trim();
-                dri.street_address = reader["street_address"].ToString().Trim();
-
-                tru.number = reader["number"].ToString().Trim();
-                tru.license_plate = reader["license_plate"].ToString().Trim();
-
-                while (endReader && ord_number == reader["number"].ToString().Trim())
+                while (keepGoing)
                 {
-                    if (reader["type"].ToString().Trim() == "PUP")
+                    string ord_number = reader["number"].ToString().Trim();
+
+                    Order ord = new Order();
+                    Driver dri = new Driver();
+                    Truck tru = new Truck();
+                    Start str = new Start();
+                    End end = new End();
+
+                    ord.number = reader["number"].ToString().Trim();
+                    ord.status = reader["status"].ToString().Trim();
+                    ord.description = reader["description"];
+                    ord.weight = reader["weight"];
+                    ord.ticket_number = reader["ticket_number"].ToString().Trim();
+
+                    dri.phone_number = reader["phone_number"].ToString().Trim();
+                    dri.first_name = reader["first_name"].ToString().Trim();
+                    dri.last_name = reader["last_name"].ToString().Trim();
+                    dri.license_number = reader["license_number"].ToString().Trim();
+                    dri.zipcode = reader["zipcode"].ToString().Trim();
+                    dri.state = reader["state"].ToString().Trim();
+                    dri.id = reader["driver_id"].ToString().Trim();
+                    dri.street_address = reader["street_address"].ToString().Trim();
+
+                    tru.number = reader["number"].ToString().Trim();
+                    tru.license_plate = reader["license_plate"].ToString().Trim();
+
+                    while (endReader && ord_number == reader["number"].ToString().Trim())
                     {
-                        str.weight = reader["stop_weight"];
-                        str.type = reader["type"].ToString();
-                        str.time = Convert.ToDateTime(reader["time"]);
-                        str.zipcode = reader["stop_zipcode"].ToString().Trim();
-                        str.address = reader["stop_address"].ToString().Trim();
-                        str.order_number = reader["number"].ToString().Trim();
-                        str.id = reader["stop_id"].ToString().Trim();
-                    }
-                    else
-                    {
-                        end.weight = reader["stop_weight"];
-                        end.type = reader["type"].ToString();
-                        end.time = Convert.ToDateTime(reader["time"]);
-                        end.zipcode = reader["stop_zipcode"].ToString().Trim();
-                        end.address = reader["stop_address"].ToString().Trim();
-                        end.order_number = reader["number"].ToString().Trim();
-                        end.id = reader["stop_id"].ToString().Trim();
+                        if (reader["type"].ToString().Trim() == "PUP")
+                        {
+                            str.weight = reader["stop_weight"];
+                            str.type = reader["type"].ToString();
+                            str.time = Convert.ToDateTime(reader["time"]);
+                            str.zipcode = reader["stop_zipcode"].ToString().Trim();
+                            str.address = reader["stop_address"].ToString().Trim();
+                            str.order_number = reader["number"].ToString().Trim();
+                            str.id = reader["stop_id"].ToString().Trim();
+                        }
+                        else
+                        {
+                            end.weight = reader["stop_weight"];
+                            end.type = reader["type"].ToString();
+                            end.time = Convert.ToDateTime(reader["time"]);
+                            end.zipcode = reader["stop_zipcode"].ToString().Trim();
+                            end.address = reader["stop_address"].ToString().Trim();
+                            end.order_number = reader["number"].ToString().Trim();
+                            end.id = reader["stop_id"].ToString().Trim();
+                        }
+
+                        endReader = reader.Read();
                     }
 
-                    endReader = reader.Read();
+                    if (endReader == false)
+                        keepGoing = false;
+
+                    objs.Add(new Order
+                    {
+                        status = ord.status,
+                        end = end,
+                        description = ord.description,
+                        weight = ord.weight,
+                        driver = dri,
+                        number = ord.number,
+                        start = str,
+                        truck = tru,
+                        ticket_number = ord.ticket_number
+                    }
+                        );
+
+                    rowCount++;
                 }
-
-                if (endReader == false)
-                    keepGoing = false;
-
-                objs.Add(new Order{
-                    status = ord.status,
-                    end = end,
-                    description =  ord.description,
-                    weight = ord.weight,
-                    driver = dri,
-                    number = ord.number,
-                    start = str,
-                    truck = tru,
-                    ticket_number = ord.ticket_number }
-                    );
-
-                rowCount++;
             }
 
             var totalCount = rowCount;
