@@ -74,31 +74,44 @@ namespace sunset_api
                     tru.number = reader["driver_number"].ToString().Trim();
                     tru.license_plate = reader["license_plate"].ToString().Trim();
 
-                    while (endReader && ord_number == reader["number"].ToString().Trim())
+                    if (reader["type"].ToString().Trim() == "PUP")
                     {
-                        if (reader["type"].ToString().Trim() == "PUP")
-                        {
-                            str.weight = reader["stop_weight"];
-                            str.type = reader["type"].ToString();
-                            str.time = Convert.ToDateTime(reader["time"]);
-                            str.zipcode = reader["stop_zipcode"].ToString().Trim();
-                            str.address = reader["stop_address"].ToString().Trim();
-                            str.order_number = reader["number"].ToString().Trim();
-                            str.id = reader["stop_id"].ToString().Trim();
-                        }
-                        else
-                        {
-                            end.weight = reader["stop_weight"];
-                            end.type = reader["type"].ToString();
-                            end.time = Convert.ToDateTime(reader["time"]);
-                            end.zipcode = reader["stop_zipcode"].ToString().Trim();
-                            end.address = reader["stop_address"].ToString().Trim();
-                            end.order_number = reader["number"].ToString().Trim();
-                            end.id = reader["stop_id"].ToString().Trim();
-                        }
-
-                        endReader = reader.Read();
+                        str.weight = reader["stop_weight"];
+                        str.type = reader["type"].ToString();
+                        str.time = Convert.ToDateTime(reader["time"]);
+                        str.zipcode = reader["stop_zipcode"].ToString().Trim();
+                        str.address = reader["stop_address"].ToString().Trim();
+                        str.order_number = reader["number"].ToString().Trim();
+                        str.id = reader["stop_id"].ToString().Trim();
                     }
+
+                    //GET DRP Stop regardless of date just equal to DRP and ord_hdrnumber = ord_number
+                    using (SqlConnection drp_conn = new SqlConnection(@"Data Source=sunset.c8cr1ng5leql.us-east-1.rds.amazonaws.com,1433;Initial Catalog=TMWSunset_Live;User id=sunset;Password=sunsetruckit;"))
+                    {
+                        drp_conn.Open();
+                        SqlCommand drp_command = new SqlCommand();
+                        drp_command.Connection = drp_conn;
+                        drp_command.CommandText = "SELECT stops.stp_type as type, stops.stp_address as stop_address, stops.stp_zipcode as stop_zipcode,stops.ord_hdrnumber as hdrnumber, " +
+                                              "stops.stp_schdtearliest as time, stops.stp_number as stop_id, stops.stp_weight as stop_weight FROm stops " +
+                                              "WHERE stops.stp_type = 'DRP' AND stops.ord_hdrnumber = '" + reader["number"].ToString().Trim() + "'";
+
+                        SqlDataReader drp_reader = drp_command.ExecuteReader();
+                        drp_reader.Read();
+
+                        if (drp_reader.HasRows)
+                        {
+                            end.weight = drp_reader["stop_weight"];
+                            end.type = drp_reader["type"].ToString();
+                            end.time = Convert.ToDateTime(drp_reader["time"]);
+                            end.zipcode = drp_reader["stop_zipcode"].ToString().Trim();
+                            end.address = drp_reader["stop_address"].ToString().Trim();
+                            end.order_number = drp_reader["hdrnumber"].ToString().Trim();
+                            end.id = drp_reader["stop_id"].ToString().Trim();
+                        }
+                        drp_conn.Close();
+                    }
+
+                    endReader = reader.Read();
 
                     if (endReader == false)
                         keepGoing = false;
@@ -114,8 +127,7 @@ namespace sunset_api
                         start = str,
                         truck = tru,
                         ticket_number = ord.ticket_number
-                    }
-                        );
+                    });
 
                     rowCount++;
                 }
@@ -134,6 +146,7 @@ namespace sunset_api
 
             string json = JsonConvert.SerializeObject(paginationHeader, Formatting.Indented);
 
+            
             conn.Close();
             return json;
         }

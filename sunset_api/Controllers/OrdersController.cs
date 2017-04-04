@@ -77,7 +77,7 @@ namespace sunset_api.Controllers
                            "JOIN manpowerprofile ON orderheader.ord_driver1 = manpowerprofile.mpp_id " +
                            "JOIN tractorprofile ON orderheader.ord_tractor = tractorprofile.trc_number " +
                            "WHERE orderheader.ord_status = '" + status + "' AND stops.stp_schdtearliest > '" + start.ToUniversalTime().ToString() + "' AND stops.stp_schdtearliest < '" + end.ToUniversalTime().ToString() + "' " +
-                           "AND (stops.stp_type = 'PUP' OR stops.stp_type = 'DRP') ORDER BY orderheader.ord_number";
+                           "AND stops.stp_type = 'PUP' ORDER BY orderheader.ord_number";
 
             result = db.QuerryJSON(query);
 
