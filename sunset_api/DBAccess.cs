@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.Collections;
 
 namespace sunset_api
-{    
+{
     public class DBAccess
     {
         public SqlConnection conn;
@@ -18,7 +18,7 @@ namespace sunset_api
         public DBAccess()
         {
             //if (Debugger.IsAttached)
-                conn = new SqlConnection(@"Data Source=sunset.c8cr1ng5leql.us-east-1.rds.amazonaws.com,1433;Initial Catalog=TMWSunset_Live;User id=sunset;Password=sunsetruckit;");
+            conn = new SqlConnection(@"Data Source=sunset.c8cr1ng5leql.us-east-1.rds.amazonaws.com,1433;Initial Catalog=TMWSunset_Live;User id=sunset;Password=sunsetruckit;");
             //else
             //    conn = new SqlConnection(@"Data Source=SET-SQL01;Initial Catalog=TMWSunset_Live;User id=Ruckitadmin;Password=Sunset2017#;");
         }
@@ -32,7 +32,7 @@ namespace sunset_api
             {
                 conn.Open();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             { return ex.Message; }
 
             SqlCommand command = new SqlCommand();
@@ -48,6 +48,7 @@ namespace sunset_api
             {
                 while (keepGoing)
                 {
+                    bool printOrder = false;
                     string ord_number = reader["number"].ToString().Trim();
 
                     Order ord = new Order();
@@ -71,65 +72,63 @@ namespace sunset_api
                     dri.id = reader["driver_id"].ToString().Trim();
                     dri.street_address = reader["street_address"].ToString().Trim();
 
-                    tru.number = reader["number"].ToString().Trim();
+                    tru.number = reader["driver_number"].ToString().Trim();
                     tru.license_plate = reader["license_plate"].ToString().Trim();
 
-                    if (reader["type"].ToString().Trim() == "PUP")
+                    bool pup = false;
+
+                    while (endReader && ord_number == reader["number"].ToString().Trim())
                     {
-                        str.weight = reader["stop_weight"];
-                        str.type = reader["type"].ToString();
-                        str.time = Convert.ToDateTime(reader["time"]);
-                        str.zipcode = reader["stop_zipcode"].ToString().Trim();
-                        str.address = reader["stop_address"].ToString().Trim();
-                        str.order_number = reader["number"].ToString().Trim();
-                        str.id = reader["stop_id"].ToString().Trim();
-                    }
-
-                    //GET DRP Stop regardless of date just equal to DRP and ord_hdrnumber = ord_number
-                    using (SqlConnection drp_conn = new SqlConnection(@"Data Source=sunset.c8cr1ng5leql.us-east-1.rds.amazonaws.com,1433;Initial Catalog=TMWSunset_Live;User id=sunset;Password=sunsetruckit;"))
-                    {
-                        drp_conn.Open();
-                        SqlCommand drp_command = new SqlCommand();
-                        drp_command.Connection = drp_conn;
-                        drp_command.CommandText = "SELECT stops.stp_type as type, stops.stp_address as stop_address, stops.stp_zipcode as stop_zipcode,stops.ord_hdrnumber as hdrnumber, " +
-                                              "stops.stp_schdtearliest as time, stops.stp_number as stop_id, stops.stp_weight as stop_weight FROm stops " +
-                                              "WHERE stops.stp_type = 'DRP' AND stops.ord_hdrnumber = '" + reader["number"].ToString().Trim() + "'";
-
-                        SqlDataReader drp_reader = drp_command.ExecuteReader();
-                        drp_reader.Read();
-
-                        if (drp_reader.HasRows)
+                        if (reader["type"].ToString().Trim() == "PUP")
                         {
-                            end.weight = drp_reader["stop_weight"];
-                            end.type = drp_reader["type"].ToString();
-                            end.time = Convert.ToDateTime(drp_reader["time"]);
-                            end.zipcode = drp_reader["stop_zipcode"].ToString().Trim();
-                            end.address = drp_reader["stop_address"].ToString().Trim();
-                            end.order_number = drp_reader["hdrnumber"].ToString().Trim();
-                            end.id = drp_reader["stop_id"].ToString().Trim();
-                        }
-                        drp_conn.Close();
-                    }
+                            pup = true;
 
-                    endReader = reader.Read();
+                            str.weight = reader["stop_weight"].ToString() == string.Empty ? null : reader["stop_weight"];
+                            str.type = reader["type"].ToString();
+                            str.time = Convert.ToDateTime(reader["time"]);
+                            str.zipcode = reader["stop_zipcode"].ToString().Trim();
+                            str.address = reader["stop_address"].ToString().Trim();
+                            str.order_number = reader["number"].ToString().Trim();
+                            str.id = reader["stop_id"].ToString().Trim();
+                        }
+                        else if(pup == true)
+                        {
+                            pup = false;
+
+                            end.weight = reader["stop_weight"].ToString() == string.Empty ? null : reader["stop_weight"];
+                            end.type = reader["type"].ToString();
+                            end.time = Convert.ToDateTime(reader["time"]);
+                            end.zipcode = reader["stop_zipcode"].ToString().Trim();
+                            end.address = reader["stop_address"].ToString().Trim();
+                            end.order_number = reader["number"].ToString().Trim();
+                            end.id = reader["stop_id"].ToString().Trim();
+
+                            printOrder = true;
+                        }
+
+                        endReader = reader.Read();
+                    }
 
                     if (endReader == false)
                         keepGoing = false;
 
-                    objs.Add(new Order
+                    if (printOrder)
                     {
-                        status = ord.status,
-                        end = end,
-                        description = ord.description,
-                        weight = ord.weight,
-                        driver = dri,
-                        number = ord.number,
-                        start = str,
-                        truck = tru,
-                        ticket_number = ord.ticket_number
-                    });
+                        objs.Add(new Order
+                        {
+                            status = ord.status,
+                            end = end,
+                            description = ord.description,
+                            weight = ord.weight,
+                            driver = dri,
+                            number = ord.number,
+                            start = str,
+                            truck = tru,
+                            ticket_number = ord.ticket_number
+                        });
 
-                    rowCount++;
+                        rowCount++;
+                    }
                 }
             }
 
@@ -146,7 +145,6 @@ namespace sunset_api
 
             string json = JsonConvert.SerializeObject(paginationHeader, Formatting.Indented);
 
-            
             conn.Close();
             return json;
         }
@@ -157,7 +155,7 @@ namespace sunset_api
 
             SqlCommand command = new SqlCommand();
             command.Connection = conn;
-            command.CommandText = querry;            
+            command.CommandText = querry;
             command.ExecuteNonQuery();
 
             conn.Close();
@@ -183,7 +181,7 @@ namespace sunset_api
 
             return results;
         }
-        private Dictionary<string, object> SerializeRow(IEnumerable<string> cols,SqlDataReader reader)
+        private Dictionary<string, object> SerializeRow(IEnumerable<string> cols, SqlDataReader reader)
         {
             var result = new Dictionary<string, object>();
             foreach (var col in cols)
