@@ -71,7 +71,7 @@ namespace sunset_api
                     dri.id = reader["driver_id"].ToString().Trim();
                     dri.street_address = reader["street_address"].ToString().Trim();
 
-                    tru.number = reader["driver_number"].ToString().Trim();
+                    tru.number = reader["number"].ToString().Trim();
                     tru.license_plate = reader["license_plate"].ToString().Trim();
 
                     if (reader["type"].ToString().Trim() == "PUP")
