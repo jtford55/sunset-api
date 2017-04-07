@@ -17,6 +17,7 @@ namespace sunset_api
 
         public DBAccess()
         {
+            //Connection strings for the test server (aws) and sunset server(set-sql01)
             //if (Debugger.IsAttached)
             conn = new SqlConnection(@"Data Source=sunset.c8cr1ng5leql.us-east-1.rds.amazonaws.com,1433;Initial Catalog=TMWSunset_Live;User id=sunset;Password=sunsetruckit;");
             //else
@@ -51,6 +52,7 @@ namespace sunset_api
                     bool printOrder = false;
                     string ord_number = reader["number"].ToString().Trim();
 
+                    //Create objects 
                     Order ord = new Order();
                     Driver dri = new Driver();
                     Truck tru = new Truck();
@@ -77,6 +79,7 @@ namespace sunset_api
 
                     bool pup = false;
 
+                    //Loop through results to write the corrispoding Stops PUP and DRP  there will be 1 of each per order. 
                     while (endReader && ord_number == reader["number"].ToString().Trim())
                     {
                         if (reader["type"].ToString().Trim() == "PUP")
@@ -114,6 +117,7 @@ namespace sunset_api
 
                     if (printOrder)
                     {
+                        //Add Order to Arraylist that will later be used to create JSON object. 
                         objs.Add(new Order
                         {
                             status = ord.status,
@@ -134,7 +138,7 @@ namespace sunset_api
 
             var totalCount = rowCount;
 
-            var paginationHeader = new
+            var pagination = new
             {
                 count = totalCount,
                 next = "",
@@ -142,8 +146,8 @@ namespace sunset_api
                 previous = ""
             };
 
-
-            string json = JsonConvert.SerializeObject(paginationHeader, Formatting.Indented);
+            //Create JSON object out of pagination object that contains row count, and results. 
+            string json = JsonConvert.SerializeObject(pagination, Formatting.Indented);
 
             conn.Close();
             return json;

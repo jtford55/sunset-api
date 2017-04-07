@@ -30,9 +30,10 @@ namespace sunset_api
                 var username = usernamePassword.Substring(0, seperatorIndex);
                 var password = usernamePassword.Substring(seperatorIndex + 1);
 
+                //If username and password match it will allow user to continue with Web Service calls. 
                 if (username == "Ruckitadmin" && password == "Sunset2017#")
                 {
-                    await _next.Invoke(context);
+                    await _next.Invoke(context); //Authorized
                 }
                 else
                 {
