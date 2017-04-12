@@ -66,20 +66,11 @@ namespace sunset_api.Controllers
                 status = status.Replace("\"", "");
             }
 
-            string query = "SELECT orderheader.ord_number AS number, orderheader.ord_status AS status, orderheader.ord_totalweight AS weight, orderheader.ord_refnum AS ticket_number," +
-                           "orderheader.ord_description AS description,orderheader.ord_driver1 AS driver, orderheader.ord_tractor AS truck," +
-                           "manpowerprofile.mpp_firstname as first_name,manpowerprofile.mpp_lastname as last_name,manpowerprofile.mpp_currentphone as phone_number,manpowerprofile.mpp_id as driver_id," +
-                           "manpowerprofile.mpp_licensenumber as license_number, manpowerprofile.mpp_address1 as street_address, manpowerprofile.mpp_state as state, manpowerprofile.mpp_zip as zipcode," +
-                           "tractorprofile.trc_number as driver_number, tractorprofile.trc_licnum as license_plate," +
-                           "stops.stp_type as type, stops.stp_address as stop_address, stops.stp_zipcode as stop_zipcode, stops.stp_schdtearliest as time, stops.stp_number as stop_id, " +
-                           "stops.stp_weight as stop_weight " +
-                           "FROM orderheader JOIN stops ON orderheader.ord_number = stops.ord_hdrnumber " +
-                           "JOIN manpowerprofile ON orderheader.ord_driver1 = manpowerprofile.mpp_id " +
-                           "JOIN tractorprofile ON orderheader.ord_tractor = tractorprofile.trc_number " +
-                           "WHERE orderheader.ord_status = '" + status + "' AND ((stops.stp_type = 'PUP' AND stops.stp_schdtearliest > '" + start.ToUniversalTime().ToString() + "' AND stops.stp_schdtearliest < '" + end.ToUniversalTime().ToString() + "') OR stops.stp_type = 'DRP') " +
-                           "ORDER BY orderheader.ord_number";
+            string sQuery = "SELECT stops.ord_hdrnumber as number FROM stops " +
+                            "JOIN orderheader ON orderheader.ord_number = stops.ord_hdrnumber " +
+                            "WHERE orderheader.ord_status = '" + status + "' AND stops.stp_type = 'PUP' AND stops.stp_schdtearliest > '" + start.ToUniversalTime().ToString() + "' AND stops.stp_schdtearliest < '" + end.ToUniversalTime().ToString() + "'";
 
-            result = db.QuerryJSON(query);
+            result = db.QuerryJSON(sQuery);
 
             return result;
         }
